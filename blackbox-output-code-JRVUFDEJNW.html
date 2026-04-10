@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackCrypto - Next-Gen DeFi Exchange</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --accent-neon: #00ff88;
+            --accent-purple: #8b5cf6;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #000 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-neon);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--accent-neon);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .wallet-btn {
+            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        }
+
+        .wallet-connected {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-neon);
+            border: 1px solid var(--accent-neon);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-neon), var(--accent-purple), transparent);
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(3rem, 8vw, 6rem);
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            color: var(--text-secondary);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-neon);
+            color: #000;
+            border-color: var(--accent-neon);
+        }
+
+        /* Sections */
+        .section {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 4rem;
+            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-neon), var(--accent-purple));
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 255, 136, 0.2);
+            border-color: var(--accent-neon);
+        }
+
+        /* Swap Interface */
+        .swap-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .token-input {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .token-input input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 20px 16px 60px;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .token-input input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .token-symbol {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 700;
+            color: var(--accent-neon);
+        }
+
+        .swap-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .swap-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Token Creator */
+        .token-creator {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .logo-upload {
+            border: 2px dashed var(--glass-border);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .logo-upload:hover {
+            border-color: var(--accent-neon);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .network-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .network-tab {
+            padding: 12px 24px;
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            background: var(--glass-bg);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .network-tab.active {
+            background: var(--accent-neon);
+            color: #000;
+            border-color: var(--accent-neon);
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-neon);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .network-tabs {
+                flex-direction: column;
+            }
+        }
+
+        /* Animations */
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.6); }
+        }
+
+        .glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        /* Page Visibility */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">BlackCrypto</div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="showPage('home')">Home</a></li>
+                <li><a href="#" onclick="showPage('swap')">Swap</a></li>
+                <li><a href="#" onclick="showPage('liquidity')">Liquidity</a></li>
+                <li><a href="#" onclick="showPage('farm')">Farm</a></li>
+                <li><a href="#" onclick="showPage('analytics')">Analytics</a></li>
+                <li><a href="#" onclick="showPage('creator')">Create Token</a></li>
+            </ul>
+            <button id="walletBtn" class="wallet-btn">
+                <i class="fas fa-wallet"></i> Connect Wallet
+            </button>
+        </nav>
+    </header>
+
+    <!-- Home Page -->
+    <section id="home" class="page active">
+        <div class="hero">
+            <div class="container">
+                <h1>BlackCrypto</h1>
+                <p>The next-generation DeFi exchange with lightning-fast swaps, deep liquidity, and revolutionary token creation tools. Trade the future today.</p>
+                <div class="cta-buttons">
+                    <a href="#" class="btn-primary" onclick="showPage('swap')">Start Trading</a>
+                    <a href="#" class="btn-secondary" onclick="showPage('creator')">Create Token</a>
+                </div>
+            </div>
+        </div>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Features</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <i class="fas fa-exchange-alt fa-3x" style="color: var(--accent-neon); margin-bottom: 1rem;"></i>
+                        <h3>Instant Swaps</h3>
+                        <p>Trade any token pair with minimal slippage and lightning-fast execution.</p>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-layer-group fa-3x" style="color: var(--accent-purple); margin-bottom: 1rem;"></i>
+                        <h3>Deep Liquidity</h3>
+                        <p>Provide liquidity and earn fees from every trade on your favorite pairs.</p>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-seedling fa-3x" style="color: var(--accent-neon); margin-bottom: 1rem;"></i>
+                        <h3>Farming Rewards</h3>
+                        <p>Stake LP tokens and earn high APY from our yield farming pools.</p>
+                    </div>
+                    <div class="card">
+                        <i class="fas fa-rocket fa-3x" style="color: var(--accent-purple); margin-bottom: 1rem;"></i>
+                        <h3>Token Creator</h3>
+                        <p>Create your own ERC20/BEP20 token in minutes, no coding required.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- Swap Page -->
+    <section id="swap" class="page">
+        <div class="section container">
+            <h2 class="section-title">Swap Tokens</h2>
+            <div class="swap-container">
+                <div class="token-input">
+                    <span class="token-symbol">BNB</span>
+                    <input type="number" placeholder="0.0" id="fromAmount">
+                </div>
+                <div class="token-input">
+                    <span class="token-symbol">BLACK</span>
+                    <input type="number" placeholder="0.0" id="toAmount" readonly>
+                </div>
+                <button class="swap-btn" onclick="performSwap()">
+                    <i class="fas fa-exchange-alt"></i> Swap
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Liquidity Page -->
+    <section id="liquidity" class="page">
+        <div class="section container">
+            <h2 class="section-title">Liquidity Pools</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">$12.4M</div>
+                    <div>Total Value Locked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">24h</div>
+                    <div>Volume</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">187%</div>
+                    <div>APR</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 3rem;">
+                <button class="btn-primary" style="padding: 18px 40px; font-size: 1.1rem;">
+                    <i class="fas fa-plus"></i> Add Liquidity
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Farm Page -->
+    <section id="farm" class="page">
+        <div class="section container">
+            <h2 class="section-title">Yield Farming</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">$8.7M</div>
+                    <div>TVL in Farms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">245%</div>
+                    <div>Max APR</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">42</div>
+                    <div>Active Farms</div>
+               
